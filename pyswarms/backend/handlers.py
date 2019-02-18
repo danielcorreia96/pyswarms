@@ -24,6 +24,7 @@ import logging
 import numpy as np
 
 from ..utils.reporter import Reporter
+from .operators import check_random_state
 
 
 class HandlerMixin(object):
@@ -275,12 +276,13 @@ class BoundaryHandler(HandlerMixin):
             self.memory = new_pos
         return new_pos
 
-    def random(self, position, bounds, **kwargs):
+    def random(self, position, bounds, **kwargs, random_state=None):
         """Set position to random location
 
         This method resets particles that exeed the bounds to a random position
         inside the boundary conditions.
         """
+        random_state = check_random_state(random_state)
         lb, ub = bounds
         lower_than_bound, greater_than_bound = self._out_of_bounds(
             position, bounds
@@ -290,14 +292,14 @@ class BoundaryHandler(HandlerMixin):
         new_pos[greater_than_bound[0]] = np.array(
             [
                 np.array([u - l for u, l in zip(ub, lb)])
-                * np.random.random_sample((position.shape[1],))
+                * random_state.random_sample((position.shape[1],))
                 + lb
             ]
         )
         new_pos[lower_than_bound[0]] = np.array(
             [
                 np.array([u - l for u, l in zip(ub, lb)])
-                * np.random.random_sample((position.shape[1],))
+                * random_state.random_sample((position.shape[1],))
                 + lb
             ]
         )

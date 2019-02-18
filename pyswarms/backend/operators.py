@@ -21,7 +21,7 @@ from .handlers import BoundaryHandler, VelocityHandler
 rep = Reporter(logger=logging.getLogger(__name__))
 
 
-def compute_pbest(swarm):
+def compute_pbest(swarm, random_state=None):
     """Update the personal best score of a swarm instance
 
     You can use this method to update your personal best positions.
@@ -58,6 +58,7 @@ def compute_pbest(swarm):
     numpy.ndarray
         New personal best costs of shape :code:`(n_particles,)`
     """
+    random_state = check_random_state(random_state)
     try:
         # Infer dimensions from positions
         dimensions = swarm.dimensions
@@ -78,7 +79,7 @@ def compute_pbest(swarm):
         return (new_pbest_pos, new_pbest_cost)
 
 
-def compute_velocity(swarm, clamp, vh, bounds=None):
+def compute_velocity(swarm, clamp, vh, bounds=None, random_state=None):
     """Update the velocity matrix
 
     This method updates the velocity matrix using the best and current
@@ -121,6 +122,7 @@ def compute_velocity(swarm, clamp, vh, bounds=None):
     numpy.ndarray
         Updated velocity matrix
     """
+    random_state = check_random_state(random_state)
     try:
         # Prepare parameters
         swarm_size = swarm.position.shape
@@ -130,12 +132,12 @@ def compute_velocity(swarm, clamp, vh, bounds=None):
         # Compute for cognitive and social terms
         cognitive = (
             c1
-            * np.random.uniform(0, 1, swarm_size)
+            * random_state.uniform(0, 1, swarm_size)
             * (swarm.pbest_pos - swarm.position)
         )
         social = (
             c2
-            * np.random.uniform(0, 1, swarm_size)
+            * random_state.uniform(0, 1, swarm_size)
             * (swarm.best_pos - swarm.position)
         )
         # Compute temp velocity (subject to clamping if possible)
@@ -156,7 +158,7 @@ def compute_velocity(swarm, clamp, vh, bounds=None):
         return updated_velocity
 
 
-def compute_position(swarm, bounds, bh):
+def compute_position(swarm, bounds, bh, random_state=None):
     """Update the position matrix
 
     This method updates the position matrix given the current position and
@@ -207,3 +209,24 @@ def compute_position(swarm, bounds, bh):
         raise
     else:
         return position
+
+
+def check_random_state(seed):
+    # From https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/utils/validation.py
+    """Turn seed into a np.random.RandomState instance
+    Parameters
+    ----------
+    seed : None | int | instance of RandomState
+        If seed is None, return the RandomState singleton used by np.random.
+        If seed is an int, return a new RandomState instance seeded with seed.
+        If seed is already a RandomState instance, return it.
+        Otherwise raise ValueError.
+    """
+    if seed is None or seed is np.random:
+        return np.random.mtrand._rand
+    if isinstance(seed, (numbers.Integral, np.integer)):
+        return np.random.RandomState(seed)
+    if isinstance(seed, np.random.RandomState):
+        return seed
+    raise ValueError('%r cannot be used to seed a numpy.random.RandomState'
+                     ' instance' % seed)

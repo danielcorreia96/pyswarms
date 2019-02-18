@@ -36,8 +36,8 @@ from collections import namedtuple
 import numpy as np
 
 # Import from package
-from ..backend import create_swarm
-
+from ..backend.generators import create_swarm
+from ..backend.operators import check_random_state
 
 class DiscreteSwarmOptimizer(abc.ABC):
     def __init__(
@@ -49,6 +49,7 @@ class DiscreteSwarmOptimizer(abc.ABC):
         velocity_clamp=None,
         init_pos=None,
         ftol=-np.inf,
+        random_state=None
     ):
         """Initialize the swarm.
 
@@ -93,6 +94,7 @@ class DiscreteSwarmOptimizer(abc.ABC):
         self.options = options
         self.init_pos = init_pos
         self.ftol = ftol
+        self.random_state = random_state
         # Initialize named tuple for populating the history list
         self.ToHistory = namedtuple(
             "ToHistory",
@@ -184,6 +186,9 @@ class DiscreteSwarmOptimizer(abc.ABC):
         self.pos_history = []
         self.velocity_history = []
 
+        # Initialize random seed
+        self.random_state = random_state
+
         # Initialize the swarm
         self.swarm = create_swarm(
             n_particles=self.n_particles,
@@ -193,4 +198,5 @@ class DiscreteSwarmOptimizer(abc.ABC):
             binary=self.binary,
             clamp=self.velocity_clamp,
             options=self.options,
+            random_state=self.random_state
         )

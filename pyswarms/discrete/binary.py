@@ -75,6 +75,7 @@ class BinaryPSO(DiscreteSwarmOptimizer):
         velocity_clamp=None,
         vh_strategy="unmodified",
         ftol=-np.inf,
+        random_state=None
     ):
         """Initialize the swarm
 
@@ -127,6 +128,7 @@ class BinaryPSO(DiscreteSwarmOptimizer):
             init_pos=init_pos,
             velocity_clamp=velocity_clamp,
             ftol=ftol,
+            random_state=random_state
         )
         # Initialize the resettable attributes
         self.reset()
@@ -229,7 +231,7 @@ class BinaryPSO(DiscreteSwarmOptimizer):
             a Swarm class
         """
         return (
-            np.random.random_sample(size=swarm.dimensions)
+            self.random_state.random_sample(size=swarm.dimensions)
             < self._sigmoid(swarm.velocity)
         ) * 1
 

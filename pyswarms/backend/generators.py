@@ -17,12 +17,13 @@ import numpy as np
 
 from ..utils.reporter import Reporter
 from .swarms import Swarm
+from .operators import check_random_state
 
 rep = Reporter(logger=logging.getLogger(__name__))
 
 
 def generate_swarm(
-    n_particles, dimensions, bounds=None, center=1.00, init_pos=None
+    n_particles, dimensions, bounds=None, center=1.00, init_pos=None, random_state=None
 ):
     """Generate a swarm
 
@@ -55,6 +56,7 @@ def generate_swarm(
     TypeError
         When the argument passed to bounds is not an iterable.
     """
+    random_state = check_random_state(random_state)
     try:
         if (init_pos is not None) and (bounds is None):
             pos = init_pos
@@ -65,7 +67,7 @@ def generate_swarm(
                 raise ValueError("User-defined init_pos is out of bounds.")
             pos = init_pos
         elif (init_pos is None) and (bounds is None):
-            pos = center * np.random.uniform(
+            pos = center * random_state.uniform(
                 low=0.0, high=1.0, size=(n_particles, dimensions)
             )
         else:
@@ -76,7 +78,7 @@ def generate_swarm(
             max_bounds = np.repeat(
                 np.array(ub)[np.newaxis, :], n_particles, axis=0
             )
-            pos = center * np.random.uniform(
+            pos = center * random_state.uniform(
                 low=min_bounds, high=max_bounds, size=(n_particles, dimensions)
             )
     except ValueError:
@@ -92,7 +94,7 @@ def generate_swarm(
 
 
 def generate_discrete_swarm(
-    n_particles, dimensions, binary=False, init_pos=None
+    n_particles, dimensions, binary=False, init_pos=None, random_state=None
 ):
     """Generate a discrete swarm
 
@@ -120,6 +122,7 @@ def generate_discrete_swarm(
     TypeError
         When the argument passed to n_particles or dimensions is incorrect.
     """
+    random_state = check_random_state(random_state)
     try:
         if (init_pos is not None) and binary:
             if not len(np.unique(init_pos)) <= 2:
@@ -129,9 +132,9 @@ def generate_discrete_swarm(
         elif (init_pos is not None) and not binary:
             pos = init_pos
         elif (init_pos is None) and binary:
-            pos = np.random.randint(2, size=(n_particles, dimensions))
+            pos = random_state.randint(2, size=(n_particles, dimensions))
         else:
-            pos = np.random.random_sample(
+            pos = random_state.random_sample(
                 size=(n_particles, dimensions)
             ).argsort(axis=1)
     except ValueError:
@@ -145,7 +148,7 @@ def generate_discrete_swarm(
         return pos
 
 
-def generate_velocity(n_particles, dimensions, clamp=None):
+def generate_velocity(n_particles, dimensions, clamp=None, random_state=None):
     """Initialize a velocity vector
 
     Parameters
@@ -164,9 +167,10 @@ def generate_velocity(n_particles, dimensions, clamp=None):
     numpy.ndarray
         velocity matrix of shape (n_particles, dimensions)
     """
+    random_state = check_random_state(random_state)
     try:
         min_velocity, max_velocity = (0, 1) if clamp is None else clamp
-        velocity = (max_velocity - min_velocity) * np.random.random_sample(
+        velocity = (max_velocity - min_velocity) * random_state.random_sample(
             size=(n_particles, dimensions)
         ) + min_velocity
     except ValueError:
@@ -191,6 +195,7 @@ def create_swarm(
     center=1.0,
     init_pos=None,
     clamp=None,
+    random_state=None
 ):
     """Abstract the generate_swarm() and generate_velocity() methods
 
@@ -227,7 +232,7 @@ def create_swarm(
     """
     if discrete:
         position = generate_discrete_swarm(
-            n_particles, dimensions, binary=binary, init_pos=init_pos
+            n_particles, dimensions, binary=binary, init_pos=init_pos, random_state=random_state
         )
     else:
         position = generate_swarm(
@@ -236,7 +241,8 @@ def create_swarm(
             bounds=bounds,
             center=center,
             init_pos=init_pos,
+            random_state=random_state
         )
 
-    velocity = generate_velocity(n_particles, dimensions, clamp=clamp)
+    velocity = generate_velocity(n_particles, dimensions, clamp=clamp, random_state=random_state)
     return Swarm(position, velocity, options=options)

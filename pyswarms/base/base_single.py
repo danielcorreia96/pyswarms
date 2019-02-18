@@ -37,7 +37,8 @@ from collections import namedtuple
 # Import modules
 import numpy as np
 
-from ..backend import create_swarm
+from ..backend.generators import create_swarm
+from ..backend.operators import check_random_state
 
 
 class SwarmOptimizer(abc.ABC):
@@ -51,6 +52,7 @@ class SwarmOptimizer(abc.ABC):
         center=1.0,
         ftol=-np.inf,
         init_pos=None,
+        random_state=None
     ):
         """Initialize the swarm
 
@@ -94,6 +96,7 @@ class SwarmOptimizer(abc.ABC):
         self.center = center
         self.ftol = ftol
         self.init_pos = init_pos
+        self.random_state = random_state
         # Initialize named tuple for populating the history list
         self.ToHistory = namedtuple(
             "ToHistory",
@@ -184,6 +187,9 @@ class SwarmOptimizer(abc.ABC):
         self.pos_history = []
         self.velocity_history = []
 
+        # Initialize random seed
+        self.random_state = check_random_state(random_state)
+
         # Initialize the swarm
         self.swarm = create_swarm(
             n_particles=self.n_particles,
@@ -193,4 +199,5 @@ class SwarmOptimizer(abc.ABC):
             init_pos=self.init_pos,
             clamp=self.velocity_clamp,
             options=self.options,
+            random_state=self.random_state
         )
